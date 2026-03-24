@@ -7,15 +7,41 @@ const { generateMemorialImage } = require('../utils/imageGen');
 
 const router = express.Router();
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const MIN_DATE = '2000-01-01';
+const MAX_DATE = () => new Date().toISOString().split('T')[0];
+
+function isValidDate(str) {
+  if (!DATE_RE.test(str)) return false;
+  if (str < MIN_DATE || str > MAX_DATE()) return false;
+  const d = new Date(str + 'T12:00:00Z');
+  return !isNaN(d.getTime());
+}
+
+function isSafeStravaLink(url) {
+  if (!url) return true; // optional field
+  try {
+    const u = new URL(url);
+    return (u.protocol === 'https:' || u.protocol === 'http:') &&
+      (u.hostname === 'www.strava.com' || u.hostname === 'strava.com');
+  } catch {
+    return false;
+  }
+}
+
 // JSON endpoint: fresh draft obituary for the client-side regenerate button
 router.get('/draft-obituary', requireAuth, (req, res) => {
   const { segmentName, gotDate, lostDate, newHolder } = req.query;
   if (!segmentName || !gotDate || !lostDate) {
     return res.status(400).json({ error: 'Missing required query params.' });
   }
+  if (!isValidDate(gotDate) || !isValidDate(lostDate)) {
+    return res.status(400).json({ error: 'Invalid date format.' });
+  }
+  // segmentName comes URL-encoded from the query string — express already decodes it once
   const obituary = generateObituary({
     username: req.session.user.username,
-    segmentName: decodeURIComponent(segmentName),
+    segmentName,
     gotDate,
     lostDate,
     newHolder: newHolder || '',
@@ -34,13 +60,25 @@ router.post('/add', requireAuth, (req, res) => {
   if (!segment_name || !got_date) {
     return res.render('add-kom', { title: 'Add a KOM', error: 'Segment name and date are required.' });
   }
+  if (segment_name.length > 200) {
+    return res.render('add-kom', { title: 'Add a KOM', error: 'Segment name is too long (max 200 characters).' });
+  }
+  if (!isValidDate(got_date)) {
+    return res.render('add-kom', { title: 'Add a KOM', error: 'Invalid date format or date out of range.' });
+  }
+  if (strava_link && !isSafeStravaLink(strava_link)) {
+    return res.render('add-kom', { title: 'Add a KOM', error: 'Strava link must be a valid strava.com URL.' });
+  }
+  if (notes && notes.length > 1000) {
+    return res.render('add-kom', { title: 'Add a KOM', error: 'Notes are too long (max 1000 characters).' });
+  }
 
   createKom({
     user_id: req.session.user.id,
     segment_name: segment_name.trim(),
     got_date,
-    strava_link,
-    notes,
+    strava_link: strava_link || null,
+    notes: notes || null,
   });
 
   res.redirect('/dashboard');
@@ -78,7 +116,8 @@ router.post('/:id/memorialize', requireAuth, async (req, res) => {
   if (!kom || kom.status === 'memorialized') {
     return res.redirect('/dashboard');
   }
-  if (!lost_date || !obituary) {
+
+  const renderMemorialize = (error) => {
     const draft = generateObituary({
       username: req.session.user.username,
       segmentName: kom.segment_name,
@@ -90,8 +129,24 @@ router.post('/:id/memorialize', requireAuth, async (req, res) => {
       title: `Memorialize: ${kom.segment_name}`,
       kom,
       draftObituary: draft,
-      error: 'Date lost and obituary are required.',
+      error,
     });
+  };
+
+  if (!lost_date || !obituary) {
+    return renderMemorialize('Date lost and obituary are required.');
+  }
+  if (!isValidDate(lost_date)) {
+    return renderMemorialize('Invalid date format or date out of range.');
+  }
+  if (lost_date < kom.got_date) {
+    return renderMemorialize('Lost date cannot be before the date you got the KOM.');
+  }
+  if (new_holder && new_holder.length > 100) {
+    return renderMemorialize('New holder name is too long (max 100 characters).');
+  }
+  if (obituary.length > 2000) {
+    return renderMemorialize('Obituary is too long (max 2000 characters).');
   }
 
   const got = new Date(kom.got_date + 'T12:00:00Z');
@@ -153,8 +208,16 @@ router.get('/:id/image', requireAuth, (req, res) => {
     return res.status(404).send('Image not found.');
   }
 
-  const absPath = path.join(__dirname, '..', 'public', kom.image_path);
-  res.download(absPath, `kom-memorial-${kom.segment_name.replace(/\s+/g, '-')}.png`);
+  // Path containment: ensure the resolved path stays inside the generated images dir
+  const generatedDir = path.resolve(__dirname, '..', 'public', 'images', 'generated');
+  const absPath = path.resolve(__dirname, '..', 'public', kom.image_path);
+  if (!absPath.startsWith(generatedDir + path.sep)) {
+    return res.status(403).send('Forbidden.');
+  }
+
+  // Safe filename: strip everything except alphanumerics, hyphens, underscores, dots
+  const safeFilename = `kom-memorial-${kom.segment_name.replace(/[^a-zA-Z0-9\-_]/g, '-')}.png`;
+  res.download(absPath, safeFilename);
 });
 
 // Regenerate image

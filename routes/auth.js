@@ -5,6 +5,13 @@ const { redirectIfAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Only allow safe relative paths for post-login redirects
+function isSafeReturnTo(url) {
+  if (!url || typeof url !== 'string') return false;
+  // Must start with / but not // (protocol-relative) and not contain protocol
+  return /^\/(?!\/)/.test(url) && !url.includes(':');
+}
+
 // Landing page
 router.get('/', (req, res) => {
   if (req.session.user) return res.redirect('/dashboard');
@@ -22,11 +29,17 @@ router.post('/register', redirectIfAuth, async (req, res) => {
   if (!email || !username || !password) {
     return res.render('register', { title: 'Create Account', error: 'All fields are required.' });
   }
+  if (email.length > 254 || username.length > 50) {
+    return res.render('register', { title: 'Create Account', error: 'Input exceeds maximum length.' });
+  }
   if (password !== confirmPassword) {
     return res.render('register', { title: 'Create Account', error: 'Passwords do not match.' });
   }
-  if (password.length < 6) {
-    return res.render('register', { title: 'Create Account', error: 'Password must be at least 6 characters.' });
+  if (password.length < 8) {
+    return res.render('register', { title: 'Create Account', error: 'Password must be at least 8 characters.' });
+  }
+  if (password.length > 128) {
+    return res.render('register', { title: 'Create Account', error: 'Password is too long.' });
   }
 
   const existing = findUserByEmail(email.toLowerCase().trim());
@@ -37,8 +50,12 @@ router.post('/register', redirectIfAuth, async (req, res) => {
   const hash = await bcrypt.hash(password, 12);
   const user = createUser({ email: email.toLowerCase().trim(), username: username.trim(), password_hash: hash });
 
-  req.session.user = { id: user.id, email: user.email, username: user.username };
-  res.redirect('/dashboard');
+  // Regenerate session to prevent fixation
+  req.session.regenerate((err) => {
+    if (err) return res.redirect('/register');
+    req.session.user = { id: user.id, email: user.email, username: user.username };
+    res.redirect('/dashboard');
+  });
 });
 
 // Login
@@ -52,6 +69,9 @@ router.post('/login', redirectIfAuth, async (req, res) => {
   if (!email || !password) {
     return res.render('login', { title: 'Sign In', error: 'Email and password are required.' });
   }
+  if (email.length > 254 || password.length > 128) {
+    return res.render('login', { title: 'Sign In', error: 'Invalid email or password.' });
+  }
 
   const user = findUserByEmail(email.toLowerCase().trim());
   if (!user) {
@@ -63,10 +83,14 @@ router.post('/login', redirectIfAuth, async (req, res) => {
     return res.render('login', { title: 'Sign In', error: 'Invalid email or password.' });
   }
 
-  req.session.user = { id: user.id, email: user.email, username: user.username };
-  const returnTo = req.session.returnTo || '/dashboard';
-  delete req.session.returnTo;
-  res.redirect(returnTo);
+  const returnTo = isSafeReturnTo(req.session.returnTo) ? req.session.returnTo : '/dashboard';
+
+  // Regenerate session to prevent fixation
+  req.session.regenerate((err) => {
+    if (err) return res.redirect('/login');
+    req.session.user = { id: user.id, email: user.email, username: user.username };
+    res.redirect(returnTo);
+  });
 });
 
 // Logout

@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const fsPromises = require('fs').promises;
 
 const OUTPUT_DIR = path.join(__dirname, '..', 'public', 'images', 'generated');
 
@@ -195,7 +196,7 @@ async function generateMemorialImage({
   const filename = `kom-${komId}-${Date.now()}.png`;
   const outputPath = path.join(OUTPUT_DIR, filename);
   const buffer = canvas.toBuffer('image/png');
-  fs.writeFileSync(outputPath, buffer);
+  await fsPromises.writeFile(outputPath, buffer);
 
   // Return relative path for storage in DB
   return `/images/generated/${filename}`;
