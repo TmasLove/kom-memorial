@@ -1,0 +1,103 @@
+<%- include('partials/header') %>
+
+<div class="container page-pad">
+
+  <div class="page-header">
+    <div>
+      <h1>&#x1F3C6; Your KOM Dashboard</h1>
+      <p class="page-sub">Welcome back, <strong><%= user.username %></strong></p>
+    </div>
+    <a href="/koms/add" class="btn btn-primary">+ Add KOM</a>
+  </div>
+
+  <!-- ACTIVE KOMS -->
+  <section class="section">
+    <h2 class="section-label">
+      <span class="badge badge-green">Active</span>
+      KOMs You Currently Hold
+      <span class="count-pill"><%= activeKoms.length %></span>
+    </h2>
+
+    <% if (activeKoms.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">&#x1F6B4;</div>
+        <p>No active KOMs yet. <a href="/koms/add">Add your first one!</a></p>
+      </div>
+    <% } else { %>
+      <div class="kom-grid">
+        <% activeKoms.forEach(kom => { %>
+          <div class="kom-card kom-card--active">
+            <div class="kom-card-header">
+              <span class="kom-crown">&#x1F451;</span>
+              <span class="kom-status badge badge-green">Active</span>
+            </div>
+            <h3 class="kom-name"><%= kom.segment_name %></h3>
+            <div class="kom-meta">
+              <span>&#x1F4C5; Held since <%= new Date(kom.got_date + 'T12:00:00Z').toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) %></span>
+              <span class="days-pill">&#x23F1; <%= kom.daysHeld %> day<%= kom.daysHeld !== 1 ? 's' : '' %></span>
+            </div>
+            <% if (kom.notes) { %>
+              <p class="kom-notes">"<%= kom.notes %>"</p>
+            <% } %>
+            <% if (kom.strava_link) { %>
+              <a href="<%= kom.strava_link %>" target="_blank" rel="noopener" class="strava-link">View on Strava &#x2197;</a>
+            <% } %>
+            <div class="kom-actions">
+              <a href="/koms/<%= kom.id %>/memorialize" class="btn btn-danger btn-sm">&#x1FAA6; Lost It — Memorialize</a>
+              <form action="/koms/<%= kom.id %>/delete" method="POST" class="inline" onsubmit="return confirm('Delete this KOM record permanently?')">
+                <button type="submit" class="btn btn-ghost btn-sm">Delete</button>
+              </form>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+
+  <!-- MEMORIALIZED KOMS -->
+  <section class="section">
+    <h2 class="section-label">
+      <span class="badge badge-red">Memorialized</span>
+      Fallen Crowns
+      <span class="count-pill"><%= memorialisedKoms.length %></span>
+    </h2>
+
+    <% if (memorialisedKoms.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">&#x1FAA6;</div>
+        <p>No fallen KOMs yet. Long may your crowns reign.</p>
+      </div>
+    <% } else { %>
+      <div class="kom-grid">
+        <% memorialisedKoms.forEach(kom => { %>
+          <div class="kom-card kom-card--memorial">
+            <div class="kom-card-header">
+              <span class="kom-crown">&#x1FAA6;</span>
+              <span class="kom-status badge badge-red">Memorialized</span>
+            </div>
+            <h3 class="kom-name"><%= kom.segment_name %></h3>
+            <div class="kom-meta">
+              <span>&#x1F4C5; <%= new Date(kom.got_date + 'T12:00:00Z').toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) %> &rarr; <%= new Date(kom.lost_date + 'T12:00:00Z').toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) %></span>
+              <span class="days-pill">&#x23F1; <%= kom.daysHeld %> day<%= kom.daysHeld !== 1 ? 's' : '' %></span>
+            </div>
+            <% if (kom.new_holder) { %>
+              <p class="kom-holder">Stolen by: <strong><%= kom.new_holder %></strong></p>
+            <% } %>
+            <div class="kom-actions">
+              <a href="/koms/<%= kom.id %>/memorial" class="btn btn-outline btn-sm">View Memorial</a>
+              <% if (kom.image_path) { %>
+                <a href="/koms/<%= kom.id %>/image" class="btn btn-ghost btn-sm">&#x1F4E5; Download Image</a>
+              <% } %>
+              <form action="/koms/<%= kom.id %>/delete" method="POST" class="inline" onsubmit="return confirm('Delete this memorial permanently?')">
+                <button type="submit" class="btn btn-ghost btn-sm">Delete</button>
+              </form>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+
+</div>
+
+<%- include('partials/footer') %>

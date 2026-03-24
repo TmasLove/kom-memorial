@@ -1,0 +1,92 @@
+<%- include('partials/header') %>
+
+<div class="container page-pad narrow">
+
+  <div class="page-header">
+    <div>
+      <h1>&#x1FAA6; KOM Memorial</h1>
+    </div>
+    <a href="/dashboard" class="btn btn-ghost">&larr; Dashboard</a>
+  </div>
+
+  <!-- Tombstone card -->
+  <div class="tombstone-card">
+    <div class="tombstone-top">
+      <span class="tombstone-crown">&#x1FAA6;</span>
+      <div class="tombstone-rip">R . I . P .</div>
+      <div class="tombstone-subtitle">K I N G &nbsp; O F &nbsp; T H E &nbsp; M O U N T A I N</div>
+    </div>
+
+    <h2 class="tombstone-segment"><%= kom.segment_name %></h2>
+
+    <div class="tombstone-dates">
+      <div class="tombstone-date-block">
+        <span class="date-label">Crowned</span>
+        <span class="date-val"><%= new Date(kom.got_date + 'T12:00:00Z').toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) %></span>
+      </div>
+      <div class="tombstone-divider">&#x2014;</div>
+      <div class="tombstone-date-block">
+        <span class="date-label">Dethroned</span>
+        <span class="date-val"><%= new Date(kom.lost_date + 'T12:00:00Z').toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) %></span>
+      </div>
+    </div>
+
+    <div class="tombstone-days">
+      Held for <strong><%= daysHeld %> day<%= daysHeld !== 1 ? 's' : '' %></strong>
+    </div>
+
+    <% if (kom.new_holder) { %>
+      <div class="tombstone-holder">
+        Stolen by <em><%= kom.new_holder %></em>
+      </div>
+    <% } %>
+
+    <div class="tombstone-divider-line"></div>
+
+    <blockquote class="tombstone-obituary">
+      <%= kom.obituary %>
+    </blockquote>
+
+    <div class="tombstone-brand">KOM Memorial &bull; komemorial.app</div>
+  </div>
+
+  <!-- Actions -->
+  <div class="memorial-actions">
+
+    <% if (kom.image_path) { %>
+      <a href="/koms/<%= kom.id %>/image" class="btn btn-primary btn-lg" download>
+        &#x1F4E5; Download 1080&times;1080 PNG
+      </a>
+    <% } else { %>
+      <form action="/koms/<%= kom.id %>/regenerate-image" method="POST">
+        <button type="submit" class="btn btn-primary btn-lg">
+          &#x1F5BC; Generate Memorial Image
+        </button>
+      </form>
+    <% } %>
+
+    <% if (kom.image_path) { %>
+      <form action="/koms/<%= kom.id %>/regenerate-image" method="POST">
+        <button type="submit" class="btn btn-ghost">&#x1F504; Regenerate Image</button>
+      </form>
+    <% } %>
+
+    <% if (kom.strava_link) { %>
+      <a href="<%= kom.strava_link %>" target="_blank" rel="noopener" class="btn btn-ghost">
+        View Segment on Strava &#x2197;
+      </a>
+    <% } %>
+
+  </div>
+
+  <% if (kom.image_path) { %>
+    <div class="image-preview">
+      <h3>Memorial Image Preview</h3>
+      <img src="<%= kom.image_path %>" alt="Memorial image for <%= kom.segment_name %>" class="memorial-img" loading="lazy" />
+      <p class="img-hint">Right-click &rarr; Save Image, or use the download button above.</p>
+    </div>
+  <% } %>
+
+</div>
+
+<%- include('partials/footer') %>

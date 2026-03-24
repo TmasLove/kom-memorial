@@ -1,0 +1,98 @@
+<%- include('partials/header') %>
+
+<div class="container page-pad narrow">
+
+  <div class="page-header">
+    <div>
+      <h1>&#x1FAA6; Memorialize KOM</h1>
+      <p class="page-sub">Give this fallen crown the send-off it deserves</p>
+    </div>
+    <a href="/dashboard" class="btn btn-ghost">&larr; Back</a>
+  </div>
+
+  <div class="memorial-banner">
+    <span class="memorial-crown">&#x1FAA6;</span>
+    <div>
+      <h2><%= kom.segment_name %></h2>
+      <p>KOM held since <%= new Date(kom.got_date + 'T12:00:00Z').toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) %></p>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+  <% } %>
+
+  <div class="form-card">
+    <form action="/koms/<%= kom.id %>/memorialize" method="POST">
+
+      <div class="form-group">
+        <label for="lost_date">Date You Lost the KOM <span class="required">*</span></label>
+        <input
+          type="date"
+          id="lost_date"
+          name="lost_date"
+          value="<%= new Date().toISOString().split('T')[0] %>"
+          min="<%= kom.got_date %>"
+          max="<%= new Date().toISOString().split('T')[0] %>"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="new_holder">New Holder <span class="optional">(optional)</span></label>
+        <input
+          type="text"
+          id="new_holder"
+          name="new_holder"
+          placeholder="e.g. @JohnSmith or Jane from the local club"
+        />
+        <span class="form-hint">Who stole your crown? Leave blank if unknown.</span>
+      </div>
+
+      <div class="form-group">
+        <label for="obituary">
+          Obituary <span class="required">*</span>
+          <button type="button" class="btn-inline" id="regenerateBtn">&#x1F504; Regenerate</button>
+        </label>
+        <textarea
+          id="obituary"
+          name="obituary"
+          rows="7"
+          required
+          placeholder="Write a tribute to your lost KOM..."
+        ><%= draftObituary %></textarea>
+        <span class="form-hint">Auto-generated from a template — edit it to make it your own.</span>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-danger btn-lg">&#x1FAA6; Create Memorial</button>
+        <a href="/dashboard" class="btn btn-ghost btn-lg">Cancel</a>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<script>
+  // Client-side regenerate button - fetches a fresh draft via JSON
+  document.getElementById('regenerateBtn').addEventListener('click', function () {
+    const lostDate = document.getElementById('lost_date').value;
+    const newHolder = document.getElementById('new_holder').value;
+    const textarea = document.getElementById('obituary');
+
+    const params = new URLSearchParams({
+      segmentName: '<%= encodeURIComponent(kom.segment_name) %>',
+      gotDate: '<%= kom.got_date %>',
+      lostDate,
+      newHolder,
+    });
+
+    fetch('/koms/draft-obituary?' + params)
+      .then(r => r.json())
+      .then(data => { textarea.value = data.obituary; })
+      .catch(() => {});
+  });
+</script>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,31 @@
+<%- include('partials/header') %>
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-icon">&#x1F451;</div>
+      <h1>Welcome Back</h1>
+      <p>Sign in to view your KOM Memorial</p>
+    </div>
+
+    <% if (error) { %>
+      <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <form action="/login" method="POST" class="auth-form">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Your password" required autocomplete="current-password" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+    </form>
+
+    <p class="auth-switch">No account yet? <a href="/register">Create one free</a></p>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

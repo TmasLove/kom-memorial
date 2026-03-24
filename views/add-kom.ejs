@@ -1,0 +1,75 @@
+<%- include('partials/header') %>
+
+<div class="container page-pad narrow">
+
+  <div class="page-header">
+    <div>
+      <h1>&#x1F451; Add a KOM</h1>
+      <p class="page-sub">Log a segment you currently hold</p>
+    </div>
+    <a href="/dashboard" class="btn btn-ghost">&larr; Back</a>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+  <% } %>
+
+  <div class="form-card">
+    <form action="/koms/add" method="POST">
+
+      <div class="form-group">
+        <label for="segment_name">Segment Name <span class="required">*</span></label>
+        <input
+          type="text"
+          id="segment_name"
+          name="segment_name"
+          placeholder="e.g. Box Hill Full Climb"
+          required
+          autofocus
+        />
+        <span class="form-hint">Enter the name exactly as it appears on Strava (or close enough).</span>
+      </div>
+
+      <div class="form-group">
+        <label for="got_date">Date You Got the KOM <span class="required">*</span></label>
+        <input
+          type="date"
+          id="got_date"
+          name="got_date"
+          max="<%= new Date().toISOString().split('T')[0] %>"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="strava_link">Strava Segment Link <span class="optional">(optional)</span></label>
+        <input
+          type="url"
+          id="strava_link"
+          name="strava_link"
+          placeholder="https://www.strava.com/segments/..."
+        />
+        <span class="form-hint">Paste the URL of the Strava segment page — not your activity.</span>
+      </div>
+
+      <div class="form-group">
+        <label for="notes">Notes <span class="optional">(optional)</span></label>
+        <textarea
+          id="notes"
+          name="notes"
+          rows="3"
+          placeholder="e.g. Got it on a solo effort, perfect conditions, slight tailwind..."
+        ></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-lg">&#x1F451; Save KOM</button>
+        <a href="/dashboard" class="btn btn-ghost btn-lg">Cancel</a>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<%- include('partials/footer') %>
