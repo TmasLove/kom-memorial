@@ -50,11 +50,14 @@ router.post('/register', redirectIfAuth, async (req, res) => {
   const hash = await bcrypt.hash(password, 12);
   const user = await createUser({ email: email.toLowerCase().trim(), username: username.trim(), password_hash: hash });
 
-  // Regenerate session to prevent fixation
+  // Regenerate session to prevent fixation, then explicitly save before redirect
   req.session.regenerate((err) => {
     if (err) return res.redirect('/register');
     req.session.user = { id: user.id, email: user.email, username: user.username };
-    res.redirect('/dashboard');
+    req.session.save((saveErr) => {
+      if (saveErr) return res.redirect('/register');
+      res.redirect('/dashboard');
+    });
   });
 });
 
@@ -85,11 +88,14 @@ router.post('/login', redirectIfAuth, async (req, res) => {
 
   const returnTo = isSafeReturnTo(req.session.returnTo) ? req.session.returnTo : '/dashboard';
 
-  // Regenerate session to prevent fixation
+  // Regenerate session to prevent fixation, then explicitly save before redirect
   req.session.regenerate((err) => {
     if (err) return res.redirect('/login');
     req.session.user = { id: user.id, email: user.email, username: user.username };
-    res.redirect(returnTo);
+    req.session.save((saveErr) => {
+      if (saveErr) return res.redirect('/login');
+      res.redirect(returnTo);
+    });
   });
 });
 
