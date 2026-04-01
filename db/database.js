@@ -101,6 +101,7 @@ async function deleteKom(id) {
 }
 
 module.exports = {
+  pool,
   initDb,
   findUserByEmail,
   findUserById,

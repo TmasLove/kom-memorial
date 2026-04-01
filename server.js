@@ -11,7 +11,7 @@ const session = require('express-session');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
-const { initDb } = require('./db/database');
+const { initDb, pool: dbPool } = require('./db/database');
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const komRoutes = require('./routes/koms');
@@ -49,11 +49,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(require('path').join(__dirname, 'public')));
 
-// Session: backed by Postgres via connect-pg-simple
+// Session: backed by Postgres — reuse the same pool as the DB layer
+// (avoids connect-pg-simple creating its own pool which breaks on Neon's channel_binding URL)
 const pgSession = require('connect-pg-simple')(session);
 app.use(session({
   store: new pgSession({
-    conString: process.env.DATABASE_URL,
+    pool: dbPool,
     tableName: 'session',
     createTableIfMissing: true,
   }),
