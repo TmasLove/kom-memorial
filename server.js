@@ -69,6 +69,14 @@ app.use(session({
   },
 }));
 
+// Vercel's CDN sets Cache-Control: public by default on all serverless responses,
+// which causes it to strip Set-Cookie headers. Override to private/no-store so
+// session cookies are always delivered to the browser.
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
 // Make user available in all views
 app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
