@@ -42,13 +42,13 @@ router.post('/register', redirectIfAuth, async (req, res) => {
     return res.render('register', { title: 'Create Account', error: 'Password is too long.' });
   }
 
-  const existing = findUserByEmail(email.toLowerCase().trim());
+  const existing = await findUserByEmail(email.toLowerCase().trim());
   if (existing) {
     return res.render('register', { title: 'Create Account', error: 'An account with that email already exists.' });
   }
 
   const hash = await bcrypt.hash(password, 12);
-  const user = createUser({ email: email.toLowerCase().trim(), username: username.trim(), password_hash: hash });
+  const user = await createUser({ email: email.toLowerCase().trim(), username: username.trim(), password_hash: hash });
 
   // Regenerate session to prevent fixation
   req.session.regenerate((err) => {
@@ -73,7 +73,7 @@ router.post('/login', redirectIfAuth, async (req, res) => {
     return res.render('login', { title: 'Sign In', error: 'Invalid email or password.' });
   }
 
-  const user = findUserByEmail(email.toLowerCase().trim());
+  const user = await findUserByEmail(email.toLowerCase().trim());
   if (!user) {
     return res.render('login', { title: 'Sign In', error: 'Invalid email or password.' });
   }

@@ -10,15 +10,6 @@ const express = require('express');
 const session = require('express-session');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const path = require('path');
-const fs = require('fs');
-
-// Ensure data directories exist
-const dataDir = path.join(__dirname, 'data');
-const imagesDir = path.join(__dirname, 'public', 'images', 'generated');
-for (const dir of [dataDir, imagesDir]) {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}
 
 const { initDb } = require('./db/database');
 const authRoutes = require('./routes/auth');
@@ -30,23 +21,24 @@ const PORT = process.env.PORT || 3000;
 
 // View engine
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', require('path').join(__dirname, 'views'));
 
-// Middleware
+// Security headers
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc: ["'self'", 'data:'],
+      imgSrc: ["'self'", 'data:', 'https://*.vercel-storage.com', 'https://blob.vercel-storage.com'],
       scriptSrc: ["'self'"],
     },
   },
 }));
 
+// Rate limiting on auth routes
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
@@ -55,11 +47,16 @@ const authLimiter = rateLimit({
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(require('path').join(__dirname, 'public')));
 
-// Session: MemoryStore for dev. In production, swap in Redis or similar:
-//   store: new RedisStore({ client: redisClient })
+// Session: backed by Postgres via connect-pg-simple
+const pgSession = require('connect-pg-simple')(session);
 app.use(session({
+  store: new pgSession({
+    conString: process.env.DATABASE_URL,
+    tableName: 'session',
+    createTableIfMissing: true,
+  }),
   secret: process.env.SESSION_SECRET || 'kom-memorial-dev-secret',
   resave: false,
   saveUninitialized: false,
@@ -78,7 +75,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Apply rate limiting to auth routes
 app.use('/login', authLimiter);
 app.use('/register', authLimiter);
 
@@ -101,8 +97,20 @@ app.use((err, req, res, next) => {
   });
 });
 
-initDb();
-app.listen(PORT, () => {
-  console.log(`\n🚴 KOM Memorial is running at http://localhost:${PORT}`);
-  console.log(`   Environment: ${process.env.NODE_ENV || 'development'}\n`);
-});
+// Initialise DB tables (idempotent) then start server for local dev
+initDb()
+  .then(() => {
+    if (require.main === module) {
+      app.listen(PORT, () => {
+        console.log(`\n🚴 KOM Memorial is running at http://localhost:${PORT}`);
+        console.log(`   Environment: ${process.env.NODE_ENV || 'development'}\n`);
+      });
+    }
+  })
+  .catch(err => {
+    console.error('Fatal: DB init failed:', err);
+    process.exit(1);
+  });
+
+// Vercel expects the app to be exported
+module.exports = app;

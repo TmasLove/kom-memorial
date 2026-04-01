@@ -1,13 +1,4 @@
-const path = require('path');
-const fs = require('fs');
-const fsPromises = require('fs').promises;
-
-const OUTPUT_DIR = path.join(__dirname, '..', 'public', 'images', 'generated');
-
-// Ensure output directory exists
-if (!fs.existsSync(OUTPUT_DIR)) {
-  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-}
+const { put } = require('@vercel/blob');
 
 /**
  * Wraps text to fit within a given pixel width.
@@ -56,13 +47,13 @@ function drawCrown(ctx, cx, cy, size) {
 
   // Crown body
   ctx.beginPath();
-  ctx.moveTo(0, s * 0.75);         // bottom-left
-  ctx.lineTo(0, s * 0.35);         // left side up
-  ctx.lineTo(s * 0.25, s * 0.55);  // left inner dip
-  ctx.lineTo(s * 0.5, 0);          // center top spike
-  ctx.lineTo(s * 0.75, s * 0.55);  // right inner dip
-  ctx.lineTo(s, s * 0.35);         // right side up
-  ctx.lineTo(s, s * 0.75);         // bottom-right
+  ctx.moveTo(0, s * 0.75);
+  ctx.lineTo(0, s * 0.35);
+  ctx.lineTo(s * 0.25, s * 0.55);
+  ctx.lineTo(s * 0.5, 0);
+  ctx.lineTo(s * 0.75, s * 0.55);
+  ctx.lineTo(s, s * 0.35);
+  ctx.lineTo(s, s * 0.75);
   ctx.closePath();
   ctx.fillStyle = '#FFD700';
   ctx.fill();
@@ -90,7 +81,7 @@ function drawCrown(ctx, cx, cy, size) {
 }
 
 /**
- * Generates a 1080×1080 memorial PNG and returns the relative path.
+ * Generates a 1080×1080 memorial PNG, uploads to Vercel Blob, and returns the public URL.
  */
 async function generateMemorialImage({
   komId,
@@ -118,7 +109,6 @@ async function generateMemorialImage({
   ctx.fillStyle = '#0d0d0d';
   ctx.fillRect(0, 0, W, H);
 
-  // Polka dots
   drawPolkaDots(ctx, W, H);
 
   // Top red band
@@ -192,14 +182,16 @@ async function generateMemorialImage({
   ctx.fillStyle = '#555555';
   ctx.fillText('KOM Memorial  •  komemorial.app', W / 2, H - 30);
 
-  // --- Save file ---
+  // --- Upload to Vercel Blob ---
   const filename = `kom-${komId}-${Date.now()}.png`;
-  const outputPath = path.join(OUTPUT_DIR, filename);
   const buffer = canvas.toBuffer('image/png');
-  await fsPromises.writeFile(outputPath, buffer);
 
-  // Return relative path for storage in DB
-  return `/images/generated/${filename}`;
+  const blob = await put(filename, buffer, {
+    access: 'public',
+    contentType: 'image/png',
+  });
+
+  return blob.url;
 }
 
 module.exports = { generateMemorialImage };
