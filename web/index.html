@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KOM Memorial: a funeral card for your lost KOM</title>
+<meta name="description" content="Lost a KOM? Fill in the segment, the dates and who took it, and get a funny obituary on a memorial card for Instagram or the group chat. Free, no account, nothing uploaded.">
+<link rel="canonical" href="https://kom-memorial.pages.dev/">
+<meta name="theme-color" content="#0d0d0d">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KOM Memorial">
+<meta property="og:title" content="KOM Memorial: every KOM deserves a proper funeral">
+<meta property="og:description" content="Make a memorial card for the KOM you lost. Free, no account, nothing uploaded.">
+<meta property="og:url" content="https://kom-memorial.pages.dev/">
+<meta property="og:image" content="https://kom-memorial.pages.dev/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A KOM Memorial card: a gold crown, R.I.P. KOM, the segment name and how many days it was held">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://kom-memorial.pages.dev/og.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Playfair+Display:ital,wght@1,700&display=swap">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand"><span class="crown" aria-hidden="true"></span>KOM Memorial</a>
+    <a class="nav-link" href="https://tommyroldan.com/tools/">More tools ↗</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-inner">
+    <p class="hero-badge">For cyclists who've lost a KOM</p>
+    <h1 class="hero-title">Every KOM deserves <em>a proper funeral.</em></h1>
+    <p class="hero-sub">Tell us which segment you lost, when, and who took it. You get a funny obituary on a memorial card for Instagram or the group chat. No account. Nothing you type leaves this page.</p>
+  </div>
+</header>
+
+<main class="maker" id="maker">
+  <section class="form-card" aria-labelledby="form-h">
+    <h2 id="form-h">The fallen crown</h2>
+    <form id="form" novalidate autocomplete="off">
+      <div class="form-group">
+        <label for="rider">Your name <span class="optional">as it goes on the card</span></label>
+        <input id="rider" type="text" maxlength="60" placeholder="e.g. Tommy, or @tommy on Strava" autocomplete="nickname">
+      </div>
+      <div class="form-group">
+        <label for="segment">Segment <span class="required" aria-hidden="true">*</span></label>
+        <input id="segment" type="text" maxlength="120" placeholder="e.g. Rickenbacker Causeway Climb" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="got">Crowned <span class="required" aria-hidden="true">*</span></label>
+          <input id="got" type="date" min="2000-01-01" required>
+          <span class="form-hint">The day you took the KOM</span>
+        </div>
+        <div class="form-group">
+          <label for="lost">Dethroned <span class="required" aria-hidden="true">*</span></label>
+          <input id="lost" type="date" min="2000-01-01" required>
+          <span class="form-hint">The day you lost it</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="holder">Stolen by <span class="optional">optional</span></label>
+        <input id="holder" type="text" maxlength="60" placeholder="e.g. @JaneClimbs, or Jane from the club">
+      </div>
+      <div class="form-group">
+        <div class="label-row">
+          <label for="obit">Obituary</label>
+          <button type="button" class="btn-inline" id="redraft">Write another</button>
+        </div>
+        <textarea id="obit" rows="7" maxlength="1200"></textarea>
+        <span class="form-hint">Drafted for you from what you entered. Edit it as much as you like.</span>
+      </div>
+      <p class="err" id="form-err" role="alert"></p>
+    </form>
+  </section>
+
+  <section class="preview-col" aria-labelledby="preview-h">
+    <div class="preview-head">
+      <h2 id="preview-h">Your card</h2>
+      <div class="sizes" role="group" aria-label="Card size">
+        <button type="button" data-size="post" aria-pressed="true">Post <span>1:1</span></button>
+        <button type="button" data-size="story" aria-pressed="false">Story <span>9:16</span></button>
+      </div>
+    </div>
+    <div class="preview" id="preview">
+      <span class="example-tag" id="example-tag">Example</span>
+      <canvas id="card" width="1080" height="1080" role="img" aria-label="Memorial card preview"></canvas>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn btn-primary btn-lg" id="download" disabled>Download PNG</button>
+      <button type="button" class="btn btn-ghost btn-lg" id="share" hidden disabled>Share</button>
+      <button type="button" class="btn-inline" id="start-over">Start over</button>
+    </div>
+    <p class="form-hint need" id="need">Add the segment and the day you took the KOM to save your card.</p>
+    <p class="status" id="status" aria-live="polite"></p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p><strong>KOM Memorial</strong>: honour every segment you ever ruled.</p>
+  <p class="footer-sub">No Strava API, no account, no uploads. Your entries stay in this browser. Made by <a href="https://tommyroldan.com/tools/">Tommy Roldan</a> · <a href="https://github.com/TmasLove/kom-memorial">Source on GitHub</a></p>
+</footer>
+
+<script src="/card.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

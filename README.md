@@ -2,7 +2,27 @@
 
 > Honour every segment you ever ruled. Log your KOM achievements, and when someone steals your crown, give it the funeral it deserves.
 
-A self-hosted web app for cyclists. No Strava API. No OAuth. No data leaves your server.
+A web app for cyclists. No Strava API. No OAuth.
+
+## Use it now: no account needed
+
+**https://kom-memorial.pages.dev/**
+
+Fill in the segment, the day you took the KOM, the day you lost it and who took it. You get a drafted obituary you can edit and a memorial card you can download or share: a 1080×1080 post or a 1080×1920 story. It runs entirely in your browser. Nothing is uploaded, and your draft is kept only in your own browser.
+
+The source is the [`web/`](web/) folder: plain HTML, CSS and JavaScript with no build step.
+
+| File | What it does |
+|------|--------------|
+| `web/index.html` | The page: form, live card preview, download and share |
+| `web/app.js` | The five obituary templates, the form, download and share |
+| `web/card.js` | Draws the card on a canvas (post, story and the 1200×630 link preview) |
+| `web/app.css` | The dark polka-dot theme |
+| `web/_headers` | Security headers for Cloudflare Pages |
+
+Run it locally with any static server, for example `python3 -m http.server --directory web 8000`. It's hosted on Cloudflare Pages: `npx wrangler pages deploy web --project-name kom-memorial`.
+
+The rest of this README covers the original self-hosted version with accounts and a dashboard, which is still in this repo.
 
 ---
 
